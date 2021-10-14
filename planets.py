@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import Ellipse
 
 au = 149597871
-size_scalar = 10000
-speed_scalar = 30
+size_scalar = 1000
+speed_scalar = 1
 distance_scalar = 1
 
 
@@ -15,64 +16,95 @@ class Sun:
         self.size = size / au * size_scalar
 
 
-class Planet:
-    def __init__(self, name, days_around_sun, centre, radius, color='b', size=10, size_scalar=size_scalar, speed_scalar=speed_scalar, distance_scalar=distance_scalar):
+class CelestialBody:
+    def __init__(self, name, days_around_sun, centre, radius,
+                 color='b', size=10, size_scalar=size_scalar,
+                 speed_scalar=speed_scalar, distance_scalar=distance_scalar, alpha=None):
         self.name = name
         self.angular_velocity = 2*np.pi / days_around_sun * speed_scalar
         self.centre = centre
-        self.position = np.array([[0.0], [radius]])
-        self.radius = radius * distance_scalar
+        self.radius_a, self.radius_b = 0, 0
+        if type(radius) is tuple:
+            self.radius_a = radius[0] * distance_scalar
+            self.radius_b = radius[1] * distance_scalar
+        else:
+            self.radius_a = radius * distance_scalar
+            self.radius_b = radius * distance_scalar
+        self.position = np.array([[0.0], [self.radius_a]])
         self.color = color
         self.size = size / au * size_scalar
+        self.alpha = alpha
+        self.rotmat = None
+        if alpha is not None:
+            self.rotmat = np.array([[np.cos(alpha/180*np.pi), -np.sin(alpha/180*np.pi)],
+                                    [np.sin(alpha/180*np.pi), np.cos(alpha/180*np.pi)]])
 
     def go(self, t):
-        x = self.radius * np.sin(self.angular_velocity * t) + self.centre[0][0]
-        y = self.radius * np.cos(self.angular_velocity * t) + self.centre[1][0]
+        x = self.radius_a * np.sin(self.angular_velocity * t) + self.centre[0][0]
+        y = self.radius_b * np.cos(self.angular_velocity * t) + self.centre[1][0]
         self.position[0][0], self.position[1][0] = x, y
+
+        if self.alpha is not None:
+            self.position = np.matmul(self.rotmat, self.position)
 
 
 class SolarSystem:
-    def __init__(self, sun, planets, show_sun=False):
+    def __init__(self, sun, bodies):
         self.sun = sun
-        self.planets = planets
-        self.show_sun = show_sun
+        self.bodies = bodies
 
-    def go(self):
+    def go(self, show_sun=False, show_orbit=False):
         fig = plt.figure()
-        ax = plt.axes(xlim=(-40*distance_scalar, 40*distance_scalar), ylim=(-40*distance_scalar, 40*distance_scalar))
+        ax = plt.axes(xlim=(-50*distance_scalar, 50*distance_scalar), ylim=(-50*distance_scalar, 50*distance_scalar))
+        ax.set_facecolor([0,0,0])
         x0, x1 = ax.get_xlim()
         y0, y1 = ax.get_ylim()
         ax.set_aspect(abs(x1 - x0) / abs(y1 - y0))
 
         points = []
 
-        if self.show_sun:
+        if show_sun:
             sun, = ax.plot([], [], 'o', color='gold', markersize=self.sun.size)
             points.append(sun)
 
-        for o in self.planets:
-            planet, = ax.plot([], [], 'o', color=o.color, markersize=o.size)
-            points.append(planet)
-            orbit = plt.Circle((o.centre[0][0], o.centre[1][0]), o.radius, color='k', linewidth=0.05, fill=False)
-            ax.add_patch(orbit)
+        for o in self.bodies:
+            celestial_body = plt.Circle((o.position[0][0], o.position[1][0]), o.size/2, color=o.color)
+            points.append(celestial_body)
+
+            if show_orbit:
+                if o.radius_a == o.radius_b:
+                    orbit = plt.Circle((o.centre[0][0], o.centre[1][0]), o.radius_a,
+                                       color='w', linewidth=0.1, fill=False)
+                    ax.add_patch(orbit)
+                else:
+                    orbit = Ellipse(xy=(o.centre[0][0], o.centre[1][0]),
+                                    width=o.radius_a*2,
+                                    height=o.radius_b*2,
+                                    edgecolor='w', fc='None', lw=0.1, angle=o.alpha)
+                    ax.add_patch(orbit)
 
         def initialize():
-            for o in points:
-                o.set_data([], [])
-
-        def update(i):
-            for p in self.planets:
-                p.go(i)
-            # print([(p.name, p.position.T) for p in self.planets])
-
             u = 0
-            if self.show_sun:
-                points[0].set_data(self.sun.centre[0][0], self.sun.centre[1][0])
+            if show_sun:
                 u = 1
 
-            for j in range(len(self.planets)):
-                points[j+u].set_data(self.planets[j].position[0][0],
-                                   self.planets[j].position[1][0])
+            for j in range(len(points)):
+                points[j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
+                ax.add_patch(points[j+u])
+
+            return points,
+
+        def update(i):
+            for p in self.bodies:
+                p.go(i)
+
+            u = 0
+            if show_sun:
+                # points[0].set_data(self.sun.centre[0][0], self.sun.centre[1][0])
+                u = 1
+
+            for j in range(len(self.bodies)):
+                points[j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
 
             return points,
 
@@ -85,19 +117,22 @@ year = 365.26
 
 Sol = Sun("Sol")
 
-Mercury = Planet('Mercury', 87.96, Sol.centre, 0.39, 'darkorange', 4878)
-Venus = Planet('Venus', 224.68, Sol.centre, 0.723, 'khaki', 12104)
-Earth = Planet('Earth', year, Sol.centre, 1.0, 'royalblue', 12756)
-Mars = Planet('Mars', 686.98, Sol.centre, 1.524, 'orangered', 6787)
-Jupiter = Planet('Jupiter', 11.862*year, Sol.centre, 5.203, 'darkorange', 142796)
-Saturn = Planet('Saturn', 29.456*year, Sol.centre, 9.539, 'navajowhite', 120660)
-Uranus = Planet('Uranus', 84.07*year, Sol.centre, 19.18, 'lightsteelblue', 51118)
-Neptune = Planet('Neptune', 164.81*year, Sol.centre, 30.06, 'cornflowerblue', 48600)
+Mercury = CelestialBody('Mercury', 87.96, Sol.centre, 0.39, 'darkorange', 4878)
+Venus = CelestialBody('Venus', 224.68, Sol.centre, 0.723, 'khaki', 12104)
+Earth = CelestialBody('Earth', year, Sol.centre, 1.0, 'royalblue', 12756)
+Mars = CelestialBody('Mars', 686.98, Sol.centre, 1.524, 'orangered', 6787)
+Jupiter = CelestialBody('Jupiter', 11.862*year, Sol.centre, 5.203, 'darkorange', 142796)
+Saturn = CelestialBody('Saturn', 29.456*year, Sol.centre, 9.539, 'navajowhite', 120660)
+Uranus = CelestialBody('Uranus', 84.07*year, Sol.centre, 19.18, 'lightsteelblue', 51118)
+Neptune = CelestialBody('Neptune', 164.81*year, Sol.centre, 30.06, 'cornflowerblue', 48600)
+Pluto = CelestialBody('Pluto', 247.7*year, Sol.centre, (29.7, 49.3), 'gray', 12104, alpha=-45)
 
-planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune]
+Moon = CelestialBody('Moon', 28, Earth.position, 0.1, 'w', 3475)
+
+planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Moon]
 
 ss = SolarSystem(Sol, planets)
 
 
 if __name__ == '__main__':
-    ss.go()
+    ss.go(show_orbit=True)
