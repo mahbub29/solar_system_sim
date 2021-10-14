@@ -75,22 +75,26 @@ class SolarSystem:
                 if o.radius_a == o.radius_b:
                     orbit = plt.Circle((o.centre[0][0], o.centre[1][0]), o.radius_a,
                                        color='w', linewidth=0.1, fill=False)
-                    ax.add_patch(orbit)
+                    points.append(orbit)
+                    # ax.add_patch(orbit)
                 else:
                     orbit = Ellipse(xy=(o.centre[0][0], o.centre[1][0]),
                                     width=o.radius_a*2,
                                     height=o.radius_b*2,
                                     edgecolor='w', fc='None', lw=0.1, angle=o.alpha)
-                    ax.add_patch(orbit)
+                    points.append(orbit)
+                    # ax.add_patch(orbit)
 
         def initialize():
             u = 0
             if show_sun:
                 u = 1
 
-            for j in range(len(points)):
-                points[j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
-                ax.add_patch(points[j+u])
+            for j in range(int(len(points)/2)):
+                points[2*j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
+                ax.add_patch(points[2*j+u])
+                points[2*j+u+1].center = (self.bodies[j].centre[0][0], self.bodies[j].centre[1][0])
+                ax.add_patch(points[2*j+u+1])
 
             return points,
 
@@ -104,7 +108,8 @@ class SolarSystem:
                 u = 1
 
             for j in range(len(self.bodies)):
-                points[j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
+                points[2*j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
+                points[2*j+u+1].center = (self.bodies[j].centre[0][0], self.bodies[j].centre[1][0])
 
             return points,
 
