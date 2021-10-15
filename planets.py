@@ -4,8 +4,8 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Ellipse
 
 au = 149597871
-size_scalar = 1000
-speed_scalar = 1
+size_scalar = 1
+speed_scalar = 0.01
 distance_scalar = 1
 
 
@@ -64,7 +64,7 @@ class SolarSystem:
         points = []
 
         if show_sun:
-            sun, = ax.plot([], [], 'o', color='gold', markersize=self.sun.size)
+            sun = plt.Circle((self.sun.centre[0][0], self.sun.centre[1][0]), self.sun.size/2, color='gold')
             points.append(sun)
 
         for o in self.bodies:
@@ -76,21 +76,21 @@ class SolarSystem:
                     orbit = plt.Circle((o.centre[0][0], o.centre[1][0]), o.radius_a,
                                        color='w', linewidth=0.1, fill=False)
                     points.append(orbit)
-                    # ax.add_patch(orbit)
                 else:
                     orbit = Ellipse(xy=(o.centre[0][0], o.centre[1][0]),
                                     width=o.radius_a*2,
                                     height=o.radius_b*2,
                                     edgecolor='w', fc='None', lw=0.1, angle=o.alpha)
                     points.append(orbit)
-                    # ax.add_patch(orbit)
 
         def initialize():
             u = 0
             if show_sun:
+                points[0].center = (self.sun.centre[0][0], self.sun.centre[1][0])
+                ax.add_patch(points[0])
                 u = 1
 
-            for j in range(int(len(points)/2)):
+            for j in range(int(len(points)/2-u)):
                 points[2*j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
                 ax.add_patch(points[2*j+u])
                 points[2*j+u+1].center = (self.bodies[j].centre[0][0], self.bodies[j].centre[1][0])
@@ -104,7 +104,7 @@ class SolarSystem:
 
             u = 0
             if show_sun:
-                # points[0].set_data(self.sun.centre[0][0], self.sun.centre[1][0])
+                points[0].center = (self.sun.centre[0][0], self.sun.centre[1][0])
                 u = 1
 
             for j in range(len(self.bodies)):
@@ -132,12 +132,19 @@ Uranus = CelestialBody('Uranus', 84.07*year, Sol.centre, 19.18, 'lightsteelblue'
 Neptune = CelestialBody('Neptune', 164.81*year, Sol.centre, 30.06, 'cornflowerblue', 48600)
 Pluto = CelestialBody('Pluto', 247.7*year, Sol.centre, (29.7, 49.3), 'gray', 12104, alpha=-45)
 
+# Earth moon
 Moon = CelestialBody('Moon', 28, Earth.position, 0.1, 'w', 3475)
 
-planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Moon]
+# Jupiter moons
+Europa = CelestialBody('Europa', 3.55, Jupiter.position, 670900/au, 'goldenrod', 3140)
+Ganymede = CelestialBody('Ganymede', 7.16, Jupiter.position, 1070000/au, 'beige', 5260)
+Callisto = CelestialBody('Callisto', 16.69, Jupiter.position, 1883000/au, 'darkkhaki', 4800)
+Io = CelestialBody('Io', 1.77, Jupiter.position, 421600/au, 'yellow', 3630)
+
+planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Moon, Europa, Ganymede, Callisto, Io]
 
 ss = SolarSystem(Sol, planets)
 
 
 if __name__ == '__main__':
-    ss.go(show_orbit=True)
+    ss.go(show_orbit=True, show_sun=True)
