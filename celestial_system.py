@@ -17,6 +17,8 @@ class CelestialSystem:
         y0, y1 = ax.get_ylim()
         ax.set_aspect(abs(x1 - x0) / abs(y1 - y0))
 
+        yr_count = ax.text(-40, -40, '0 years', size=12, color='w')
+
         points = []
 
         if show_sun:
@@ -58,7 +60,7 @@ class CelestialSystem:
                 points[2*j+u+1].center = (self.bodies[j].centre[0][0], self.bodies[j].centre[1][0])
                 ax.add_patch(points[2*j+u+1])
 
-            return points,
+            return [[points], yr_count]
 
         def update(i):
             for p in self.bodies:
@@ -73,7 +75,9 @@ class CelestialSystem:
                 points[2*j+u].center = (self.bodies[j].position[0][0], self.bodies[j].position[1][0])
                 points[2*j+u+1].center = (self.bodies[j].centre[0][0], self.bodies[j].centre[1][0])
 
-            return points,
+            yr_count.set_text(str(round(speed_scalar*i/365, 2)) + ' years')
+
+            return [[points], yr_count]
 
         ani = FuncAnimation(fig, update, init_func=initialize, interval=1)
 

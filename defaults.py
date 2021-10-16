@@ -1,8 +1,8 @@
 # Constants
 au = 149597871
-size_scalar = 100
-speed_scalar = 0.1
+size_scalar = 1000
+speed_scalar = 100
 distance_scalar = 1
-side = 100
+side = 50
 year = 365.26
 

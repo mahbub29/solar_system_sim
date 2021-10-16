@@ -15,11 +15,15 @@ class CelestialBody:
                  speed_scalar=speed_scalar, distance_scalar=distance_scalar, alpha=None):
         self.name = name
         self.angular_velocity = 2*np.pi / days_around_sun * speed_scalar
-        self.centre = centre
-        self.radius_a, self.radius_b = 0, 0
+        self.radius_a, self.radius_b, self.radius_c = 0, 0, None
         if type(radius) is tuple:
-            self.radius_a = radius[0] * distance_scalar
-            self.radius_b = radius[1] * distance_scalar
+            c = (max(radius[0], radius[1]) - min(radius[0], radius[1]))/2
+            a = min(radius[0], radius[1]) + c
+            b = np.sqrt(a**2 - c**2)
+
+            self.radius_a = a * distance_scalar
+            self.radius_b = b * distance_scalar
+            self.radius_c = c * distance_scalar
         else:
             self.radius_a = radius * distance_scalar
             self.radius_b = radius * distance_scalar
@@ -31,11 +35,14 @@ class CelestialBody:
         if alpha is not None:
             self.rotmat = np.array([[np.cos(alpha/180*np.pi), -np.sin(alpha/180*np.pi)],
                                     [np.sin(alpha/180*np.pi), np.cos(alpha/180*np.pi)]])
+        self.centre = centre
+        if alpha is not None:
+            self.centre = centre + np.array([[c*np.cos(alpha)], [c*np.sin(alpha)]])
 
     def go(self, t):
         X = np.matmul(self.transmat(t), np.array([[self.radius_a], [self.radius_b]]))
         if self.alpha is not None:
-            X = np.matmul(self.rotmat, self.position)
+            X = np.matmul(self.rotmat, X)
         X = X + self.centre
         self.position[0][0], self.position[1][0] = X[0][0], X[1][0]
 

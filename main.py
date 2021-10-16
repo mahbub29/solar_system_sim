@@ -16,8 +16,8 @@ Neptune = CelestialBody('Neptune', 164.81*year, Sol.centre, 30.06, 'cornflowerbl
 
 # Elliptical Orbits
 pluto_orbit_a, pluto_orbit_b = 49.3, 29.7
-pluto_orbit_c = np.sqrt(pluto_orbit_a**2 - pluto_orbit_b**2)
-Pluto = CelestialBody('Pluto', 247.7*year, Sol.centre - np.array([[pluto_orbit_c], [0.0]]), (pluto_orbit_a, pluto_orbit_b), 'gray', 12104, alpha=0)
+angle = 45
+Pluto = CelestialBody('Pluto', 247.7*year, Sol.centre, (pluto_orbit_a, pluto_orbit_b), 'gray', 12104, alpha=angle)
 
 # Earth moon
 Moon = CelestialBody('Moon', 28, Earth.position, 0.1, 'w', 3475)
@@ -28,9 +28,12 @@ Ganymede = CelestialBody('Ganymede', 7.16, Jupiter.position, 1070000/au, 'beige'
 Callisto = CelestialBody('Callisto', 16.69, Jupiter.position, 1883000/au, 'darkkhaki', 4800)
 Io = CelestialBody('Io', 1.77, Jupiter.position, 421600/au, 'yellow', 3630)
 
-planets = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Moon, Europa, Ganymede, Callisto, Io]
+# comets
+Halleys_comet = CelestialBody("Halley's comet", 75.32*year, Sol.centre, (35.08, 0.586), 'white', 20000, alpha=0)
 
-solar_system = CelestialSystem(Sol, planets)
+cb = [Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Moon, Europa, Ganymede, Callisto, Io]
+
+solar_system = CelestialSystem(Sol, cb)
 
 
 if __name__ == '__main__':
